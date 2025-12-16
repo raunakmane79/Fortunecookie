@@ -1,341 +1,477 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Fortune Cookie Game</title>
-    <style>
-        /* --- Basic Setup & Theming --- */
-        :root {
-            --bg-color: #fdf2e9;
-            --cookie-color: #e4a74a;
-            --cookie-dark: #c98e36;
-            --paper-color: #fffbeb;
-            --text-color: #5c3a12;
-            --shadow-color: rgba(0, 0, 0, 0.15);
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Fortune Cookie Game</title>
+  <style>
+    /* --- Basic Setup & Theming --- */
+    :root {
+      --bg-color: #fdf2e9;
+      --cookie-color: #e4a74a;
+      --cookie-dark: #c98e36;
+      --paper-color: #fffbeb;
+      --text-color: #5c3a12;
+      --shadow-color: rgba(0, 0, 0, 0.15);
+      --toggle-bg: rgba(92, 58, 18, 0.08);
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        html, body {
-            height: 100%;
-            overflow: hidden; /* Prevents scrollbars on mobile */
-        }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
 
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Poppins', 'Helvetica Neue', sans-serif;
-            background: radial-gradient(circle, #fff7ed, var(--bg-color));
-            perspective: 1000px;
-            -webkit-tap-highlight-color: transparent; /* Disable tap highlight on mobile */
-        }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+      background: radial-gradient(circle, #fff7ed, var(--bg-color));
+      perspective: 1000px;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        /* --- Main Game Container --- */
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-        }
-        
-        /* --- Prompt Text --- */
-        #prompt {
-            font-size: 1.2rem;
-            font-weight: 500;
-            color: var(--text-color);
-            opacity: 1;
-            transition: opacity 0.5s ease;
-            text-align: center;
-            margin-bottom: 2rem;
-        }
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      gap: 0.75rem;
+    }
 
-        #prompt.hidden {
-            opacity: 0;
-        }
+    /* --- Mode Toggle --- */
+    .mode-toggle {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+      user-select: none;
+    }
 
-        /* --- Fortune Cookie Styling & Animation --- */
-        .fortune-cookie-wrapper {
-            position: relative;
-            width: 250px;
-            height: 200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            animation: float 4s ease-in-out infinite;
-            transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-            /* Adding a more realistic drop shadow */
-            filter: drop-shadow(0 5px 8px rgba(0,0,0,0.2));
-        }
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--toggle-bg);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+      backdrop-filter: blur(6px);
+    }
 
-        .fortune-cookie-wrapper:hover {
-            transform: scale(1.05);
-        }
-        
-        .cookie-half {
-            position: absolute;
-            width: 150px;
-            height: 150px;
-            transition: transform 1s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.8s ease-out 0.2s;
-        }
+    .toggle-label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-color);
+      opacity: 0.9;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
 
-        #cookie-left {
-            transform-origin: bottom right;
-        }
+    .toggle-label.inactive {
+      opacity: 0.45;
+      transform: scale(0.98);
+    }
 
-        #cookie-right {
-            transform-origin: bottom left;
-        }
-        
-        /* Cracked State Animation */
-        .fortune-cookie-wrapper.cracked #cookie-left {
-            transform: translate(-80px, 20px) rotate(-30deg) scale(0.9);
-            opacity: 0;
-        }
+    .switch {
+      position: relative;
+      width: 56px;
+      height: 30px;
+      border-radius: 999px;
+      background: rgba(201, 142, 54, 0.35);
+      cursor: pointer;
+      transition: background 0.25s ease;
+      box-shadow: inset 0 0 0 2px rgba(201, 142, 54, 0.25);
+    }
 
-        .fortune-cookie-wrapper.cracked #cookie-right {
-            transform: translate(80px, 20px) rotate(30deg) scale(0.9);
-            opacity: 0;
-        }
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: white;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+      transition: transform 0.25s ease;
+    }
 
-        /* --- Fortune Paper Styling & Animation --- */
-        #fortune-paper {
-            position: absolute;
-            width: 280px;
-            background-color: var(--paper-color);
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 10px 25px var(--shadow-color);
-            text-align: center;
-            opacity: 0;
-            transform: translateY(20px) scale(0.5);
-            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s;
-            pointer-events: none;
-            z-index: -1;
-        }
-        
-        #fortune-paper.visible {
-            opacity: 1;
-            transform: translateY(0) scale(1) rotate(-2deg);
-            pointer-events: auto;
-            z-index: 10;
-        }
+    /* When unfortunate mode ON */
+    .switch.on {
+      background: rgba(92, 58, 18, 0.45);
+    }
+    .switch.on::after {
+      transform: translateX(26px);
+    }
 
-        #fortune-text {
-            font-family: 'Caveat', cursive;
-            font-size: 1.8rem;
-            line-height: 1.4;
-            color: var(--text-color);
-        }
+    /* --- Prompt Text --- */
+    #prompt {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: var(--text-color);
+      opacity: 1;
+      transition: opacity 0.5s ease;
+      text-align: center;
+      margin-bottom: 1.25rem;
+    }
 
-        /* --- Reset Button --- */
-        #reset-button {
-            margin-top: 2rem;
-            padding: 12px 28px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: white;
-            background-color: var(--cookie-dark);
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px var(--shadow-color);
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.5s ease 1s;
-            pointer-events: none;
-        }
-        
-        #reset-button.visible {
-            opacity: 1;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
+    #prompt.hidden { opacity: 0; }
 
-        #reset-button:hover {
-            background-color: var(--cookie-color);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px var(--shadow-color);
-        }
+    /* --- Fortune Cookie Styling & Animation --- */
+    .fortune-cookie-wrapper {
+      position: relative;
+      width: 250px;
+      height: 200px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      animation: float 4s ease-in-out infinite;
+      transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+      filter: drop-shadow(0 5px 8px rgba(0,0,0,0.2));
+    }
 
-        /* --- Keyframe Animations --- */
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
+    .fortune-cookie-wrapper:hover { transform: scale(1.05); }
 
-        /* --- Footer --- */
-        footer {
-            position: absolute;
-            bottom: 10px;
-            width: 100%;
-            text-align: center;
-            font-size: 0.8rem;
-            color: #bda17e;
-        }
+    .cookie-half {
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      transition: transform 1s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.8s ease-out 0.2s;
+    }
 
-    </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Caveat:wght@700&display=swap" rel="stylesheet">
+    #cookie-left { transform-origin: bottom right; }
+    #cookie-right { transform-origin: bottom left; }
+
+    .fortune-cookie-wrapper.cracked #cookie-left {
+      transform: translate(-80px, 20px) rotate(-30deg) scale(0.9);
+      opacity: 0;
+    }
+
+    .fortune-cookie-wrapper.cracked #cookie-right {
+      transform: translate(80px, 20px) rotate(30deg) scale(0.9);
+      opacity: 0;
+    }
+
+    /* --- Fortune Paper Styling & Animation --- */
+    #fortune-paper {
+      position: absolute;
+      width: 280px;
+      background-color: var(--paper-color);
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 10px 25px var(--shadow-color);
+      text-align: center;
+      opacity: 0;
+      transform: translateY(20px) scale(0.5);
+      transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    #fortune-paper.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1) rotate(-2deg);
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    #fortune-text {
+      font-family: 'Caveat', cursive;
+      font-size: 1.8rem;
+      line-height: 1.4;
+      color: var(--text-color);
+    }
+
+    /* Slight vibe shift when unfortunate mode is ON (optional, subtle) */
+    body.unfortunate #fortune-paper.visible {
+      transform: translateY(0) scale(1) rotate(2deg);
+    }
+
+    /* --- Reset Button --- */
+    #reset-button {
+      margin-top: 1.25rem;
+      padding: 12px 28px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+      background-color: var(--cookie-dark);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px var(--shadow-color);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease 1s;
+      pointer-events: none;
+    }
+
+    #reset-button.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    #reset-button:hover {
+      background-color: var(--cookie-color);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--shadow-color);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    footer {
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #bda17e;
+    }
+  </style>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Caveat:wght@700&display=swap" rel="stylesheet" />
 </head>
+
 <body>
+  <div class="game-container">
 
-    <div class="game-container">
-        
-        <p id="prompt">Tap the cookie to reveal your fortune!</p>
-
-        <div class="fortune-cookie-wrapper" id="fortune-cookie">
-            <div id="fortune-paper">
-                <p id="fortune-text"></p>
-            </div>
-            
-            <svg id="cookie-left" class="cookie-half" viewBox="0 0 100 100">
-                <defs>
-                    <linearGradient id="grad-light" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#f3c27a;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#e4a74a;stop-opacity:1" />
-                    </linearGradient>
-                    <linearGradient id="grad-dark" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#d89b3f;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#c98e36;stop-opacity:1" />
-                    </linearGradient>
-                </defs>
-                <path d="M 50,95 A 45,45 0 0,1 5,50 L 50,50 Z" fill="url(#grad-light)"/>
-                <path d="M 50,95 A 45,45 0 0,0 95,50 L 50,50 Z" fill="url(#grad-dark)"/>
-            </svg>
-            <svg id="cookie-right" class="cookie-half" viewBox="0 0 100 100">
-                <defs>
-                    <linearGradient id="grad-light-right" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#f3c27a;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#e4a74a;stop-opacity:1" />
-                    </linearGradient>
-                    <linearGradient id="grad-dark-right" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#d89b3f;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#c98e36;stop-opacity:1" />
-                    </linearGradient>
-                </defs>
-                <path d="M 50,95 A 45,45 0 0,1 5,50 L 50,50 Z" fill="url(#grad-light-right)" transform="rotate(90 50 50)"/>
-                <path d="M 50,95 A 45,45 0 0,0 95,50 L 50,50 Z" fill="url(#grad-dark-right)" transform="rotate(90 50 50)"/>
-            </svg>
-        </div>
-        
-        <button id="reset-button">New Fortune</button>
+    <!-- NEW: Mode Toggle -->
+    <div class="mode-toggle">
+      <div class="toggle" id="mode-toggle" aria-label="Toggle Unfortunate Mode" role="button" tabindex="0">
+        <span class="toggle-label" id="label-lucky"> Fortunate Mode 😄</span>
+        <div class="switch" id="switch"></div>
+        <span class="toggle-label inactive" id="label-unlucky">Unfortunate Mode 😈</span>
+      </div>
     </div>
 
-    <footer>
-        &copy; 2025 raunak mane
-    </footer>
+    <p id="prompt">Tap the cookie to reveal your fortune!</p>
 
-    <script>
-        const fortunes = [
-  "You’re not behind — you just took the scenic route.",
-  "Your future self is already proud of you (and kinda hot).",
-  "You didn’t overthink it — you pre-analyzed the situation.",
-  "Some people chase peace. You mute notifications.",
-  "You’re the calm and the storm — multitasking legend.",
-  "Romanticize your 2 AM overthinking, it builds character.",
-  "Your ‘whatever happens, happens’ era is thriving.",
-  "If it’s meant for you, it won’t leave you on read.",
-  "The group chat will discuss your next move — make it spicy.",
-  "You survived worse Wi-Fi than this. You’ll be fine.",
-  "You’re not tired, you’re just buffering.",
-  "Main character, but still replies with ‘lol’ to everything.",
-  "You’re one iced coffee away from greatness.",
-  "Your soft era includes blocking nonsense. Growth.",
-  "You didn’t lose — the universe just said ‘plot twist.’",
-  "Being delulu is self-care, actually.",
-  "You don’t need a plan, you need a playlist.",
-  "Your next chapter starts after one more nap.",
-  "They’re not ignoring you — they’re intimidated. Probably.",
-  "You are the green flag you’ve been searching for.",
-  "You didn’t get rejected — they just fumbled lore.",
-  "You’re not lazy — you’re energy efficient.",
-  "Good things are loading… slowly, like your laptop.",
-  "You don’t owe anyone updates, just vibes.",
-  "You’ll figure it out. You always do.",
-  "You’re the person your old self wished they could text.",
-  "Even your resting face gives ‘main character’ energy.",
-  "Don’t chase. Scroll. Hydrate. Slay.",
-  "It’s not overthinking — it’s a mental side quest.",
-  "You don’t need closure, you need sushi.",
-  "You’re the drama, but in 4K quality.",
-  "Your peace > their opinion.",
-  "The universe said ‘ok influencer’ after your last decision.",
-  "Your glow-up will have people checking timestamps.",
-  "You’re not stuck — you’re buffering for character development.",
-  "You bring main-character energy to group projects.",
-  "Your soft-launch era is about to go viral.",
-  "You’re healing, but make it aesthetic.",
-  "Delulu today, iconic tomorrow.",
-  "Your comfort zone called — you sent it to voicemail.",
-  "You didn’t miss your chance, it’s just fashionably late.",
-  "You’re proof that chaos and charm can coexist.",
-  "You’re doing better than you refresh-check.",
-  "Even your flop era had aesthetic lighting.",
-  "The world isn’t ending, it’s just refreshing.",
-  "You’re the kind of person strangers remember.",
-  "Keep going — your ‘aha moment’ is typing…",
-  "You are both the problem and the solution. Balance.",
-  "You don’t need luck — you need Wi-Fi and confidence.",
-  "One day you’ll laugh about this — probably on a podcast."
-];
+    <div class="fortune-cookie-wrapper" id="fortune-cookie">
+      <div id="fortune-paper">
+        <p id="fortune-text"></p>
+      </div>
 
-        // DOM Elements
-        const fortuneCookie = document.getElementById('fortune-cookie');
-        const fortunePaper = document.getElementById('fortune-paper');
-        const fortuneText = document.getElementById('fortune-text');
-        const resetButton = document.getElementById('reset-button');
-        const promptText = document.getElementById('prompt');
+      <svg id="cookie-left" class="cookie-half" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="grad-light" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#f3c27a;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#e4a74a;stop-opacity:1" />
+          </linearGradient>
+          <linearGradient id="grad-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#d89b3f;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#c98e36;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <path d="M 50,95 A 45,45 0 0,1 5,50 L 50,50 Z" fill="url(#grad-light)"/>
+        <path d="M 50,95 A 45,45 0 0,0 95,50 L 50,50 Z" fill="url(#grad-dark)"/>
+      </svg>
 
-        let isCracked = false;
+      <svg id="cookie-right" class="cookie-half" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="grad-light-right" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#f3c27a;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#e4a74a;stop-opacity:1" />
+          </linearGradient>
+          <linearGradient id="grad-dark-right" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#d89b3f;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#c98e36;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <path d="M 50,95 A 45,45 0 0,1 5,50 L 50,50 Z" fill="url(#grad-light-right)" transform="rotate(90 50 50)"/>
+        <path d="M 50,95 A 45,45 0 0,0 95,50 L 50,50 Z" fill="url(#grad-dark-right)" transform="rotate(90 50 50)"/>
+      </svg>
+    </div>
 
-        function crackCookie() {
-            if (isCracked) return;
-            isCracked = true;
+    <button id="reset-button">New Fortune</button>
+  </div>
 
-            // Hide the prompt
-            promptText.classList.add('hidden');
-            
-            // Start crack animation
-            fortuneCookie.classList.add('cracked');
-            
-            // Select and display a random fortune
-            const randomIndex = Math.floor(Math.random() * fortunes.length);
-            fortuneText.textContent = fortunes[randomIndex];
-            
-            // Show the paper and reset button with a delay for animations
-            fortunePaper.classList.add('visible');
-            resetButton.classList.add('visible');
-        }
+  <footer>&copy; 2025 raunak mane</footer>
 
-        function resetGame() {
-            isCracked = false;
-            
-            // Hide paper and button
-            fortunePaper.classList.remove('visible');
-            resetButton.classList.remove('visible');
+  <script>
+    const fortunes = [
+      "You’re not behind — you just took the scenic route.",
+      "Your future self is already proud of you (and kinda hot).",
+      "You didn’t overthink it — you pre-analyzed the situation.",
+      "Some people chase peace. You mute notifications.",
+      "You’re the calm and the storm — multitasking legend.",
+      "Romanticize your 2 AM overthinking, it builds character.",
+      "Your ‘whatever happens, happens’ era is thriving.",
+      "If it’s meant for you, it won’t leave you on read.",
+      "The group chat will discuss your next move — make it spicy.",
+      "You survived worse Wi-Fi than this. You’ll be fine.",
+      "You’re not tired, you’re just buffering.",
+      "Main character, but still replies with ‘lol’ to everything.",
+      "You’re one iced coffee away from greatness.",
+      "Your soft era includes blocking nonsense. Growth.",
+      "You didn’t lose — the universe just said ‘plot twist.’",
+      "Being delulu is self-care, actually.",
+      "You don’t need a plan, you need a playlist.",
+      "Your next chapter starts after one more nap.",
+      "They’re not ignoring you — they’re intimidated. Probably.",
+      "You are the green flag you’ve been searching for.",
+      "You didn’t get rejected — they just fumbled lore.",
+      "You’re not lazy — you’re energy efficient.",
+      "Good things are loading… slowly, like your laptop.",
+      "You don’t owe anyone updates, just vibes.",
+      "You’ll figure it out. You always do.",
+      "You’re the person your old self wished they could text.",
+      "Even your resting face gives ‘main character’ energy.",
+      "Don’t chase. Scroll. Hydrate. Slay.",
+      "It’s not overthinking — it’s a mental side quest.",
+      "You don’t need closure, you need sushi.",
+      "You’re the drama, but in 4K quality.",
+      "Your peace > their opinion.",
+      "The universe said ‘ok influencer’ after your last decision.",
+      "Your glow-up will have people checking timestamps.",
+      "You’re not stuck — you’re buffering for character development.",
+      "You bring main-character energy to group projects.",
+      "Your soft-launch era is about to go viral.",
+      "You’re healing, but make it aesthetic.",
+      "Delulu today, iconic tomorrow.",
+      "Your comfort zone called — you sent it to voicemail.",
+      "You didn’t miss your chance, it’s just fashionably late.",
+      "You’re proof that chaos and charm can coexist.",
+      "You’re doing better than you refresh-check.",
+      "Even your flop era had aesthetic lighting.",
+      "The world isn’t ending, it’s just refreshing.",
+      "You’re the kind of person strangers remember.",
+      "Keep going — your ‘aha moment’ is typing…",
+      "You are both the problem and the solution. Balance.",
+      "You don’t need luck — you need Wi-Fi and confidence.",
+      "One day you’ll laugh about this — probably on a podcast."
+    ];
 
-            // Using a timeout to let the paper disappear before the cookie resets
-            setTimeout(() => {
-                fortuneCookie.classList.remove('cracked');
-                promptText.classList.remove('hidden');
-            }, 500); // This delay should match the paper's exit transition
-        }
+    // NEW: Unfortunate fortunes (playful, not hateful)
+    const unfortunes = [
+      "You will step in something wet while wearing fresh socks.",
+      "Your phone will fall exactly one inch… and still crack.",
+      "You’ll open the fridge, forget why, and repeat this 6 times.",
+      "Your charger will only work at a specific angle. That angle will change daily.",
+      "You will send the perfect text… to the wrong person.",
+      "Your next ‘quick 5 minutes’ task will take 47 minutes.",
+      "You will sneeze right after applying lip balm. Twice.",
+      "Your playlist will shuffle to the one sad song in a happy moment.",
+      "Someone will say “we should hang out” and mean “never.”",
+      "You will miss the elevator, then watch it stop at every floor.",
+      "Your iced coffee will be 90% ice, 10% regret.",
+      "You will clean your room and immediately lose everything.",
+      "Your Wi-Fi will be strong… emotionally, not technically.",
+      "You will walk into a room and your brain will factory reset.",
+      "You’ll hit ‘reply all’ when you meant ‘reply.’",
+      "Your package will be ‘out for delivery’ for 3 business days.",
+      "You will wear white and meet ketchup within the hour.",
+      "Your alarm will go off, and you’ll negotiate with it… and lose.",
+      "You will make eye contact at the worst possible moment.",
+      "Your best idea will arrive while you’re shampooing.",
+      "You will say “you too” after someone says “enjoy your meal.”",
+      "The universe has scheduled a minor inconvenience… right now.",
+      "Your hoodie strings will disappear forever. No explanation.",
+      "You will forget a name immediately after hearing it.",
+      "Your shoe will squeak in a silent room. Repeatedly.",
+      "You will join a meeting muted… then unmute at the wrong time.",
+      "Your screen protector will trap exactly one dust speck in the center.",
+      "You will trip slightly, recover, then trip again for emphasis.",
+      "Your pen will run out mid-signature.",
+      "You will remember the embarrassing thing at 2:37 AM, sharp and clear.",
+      "The next seat you choose will be wobbly.",
+      "Your AirPods will connect to the device you least expected.",
+      "You will type a masterpiece and then accidentally refresh.",
+      "You will finally relax and immediately get a ‘quick call?’ text.",
+      "You will spill water, and it will choose violence toward electronics."
+    ];
 
-        // Event Listeners
-        fortuneCookie.addEventListener('click', crackCookie);
-        resetButton.addEventListener('click', resetGame);
-    </script>
+    // DOM Elements
+    const fortuneCookie = document.getElementById('fortune-cookie');
+    const fortunePaper = document.getElementById('fortune-paper');
+    const fortuneText = document.getElementById('fortune-text');
+    const resetButton = document.getElementById('reset-button');
+    const promptText = document.getElementById('prompt');
 
+    // NEW: Toggle elements
+    const modeToggle = document.getElementById('mode-toggle');
+    const switchEl = document.getElementById('switch');
+    const labelLucky = document.getElementById('label-lucky');
+    const labelUnlucky = document.getElementById('label-unlucky');
+
+    let isCracked = false;
+    let unfortunateMode = false;
+
+    function setMode(isUnfortunate) {
+      unfortunateMode = isUnfortunate;
+      switchEl.classList.toggle('on', unfortunateMode);
+      labelLucky.classList.toggle('inactive', unfortunateMode);
+      labelUnlucky.classList.toggle('inactive', !unfortunateMode);
+      document.body.classList.toggle('unfortunate', unfortunateMode);
+      promptText.textContent = unfortunateMode
+        ? "Tap the cookie… if you dare 😈"
+        : "Tap the cookie to reveal your fortune!";
+    }
+
+    function toggleMode() {
+      // Optional: prevent mode switching after cracking (keeps UX simple)
+      if (isCracked) return;
+      setMode(!unfortunateMode);
+    }
+
+    function crackCookie() {
+      if (isCracked) return;
+      isCracked = true;
+
+      // Hide the prompt
+      promptText.classList.add('hidden');
+
+      // Start crack animation
+      fortuneCookie.classList.add('cracked');
+
+      // Choose list based on mode
+      const activeList = unfortunateMode ? unfortunes : fortunes;
+      const randomIndex = Math.floor(Math.random() * activeList.length);
+      fortuneText.textContent = activeList[randomIndex];
+
+      // Show the paper and reset button
+      fortunePaper.classList.add('visible');
+      resetButton.classList.add('visible');
+    }
+
+    function resetGame() {
+      isCracked = false;
+
+      fortunePaper.classList.remove('visible');
+      resetButton.classList.remove('visible');
+
+      setTimeout(() => {
+        fortuneCookie.classList.remove('cracked');
+        promptText.classList.remove('hidden');
+      }, 500);
+    }
+
+    // Event Listeners
+    fortuneCookie.addEventListener('click', crackCookie);
+    resetButton.addEventListener('click', resetGame);
+
+    // Toggle click + keyboard
+    modeToggle.addEventListener('click', toggleMode);
+    modeToggle.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleMode();
+      }
+    });
+
+    // Init
+    setMode(false);
+  </script>
 </body>
 </html>
+
