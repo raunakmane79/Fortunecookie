@@ -4,261 +4,299 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Fortune Cookie Game</title>
+
   <style>
-    /* --- Basic Setup & Theming --- */
-    :root {
-      --bg-color: #fdf2e9;
-      --cookie-color: #e4a74a;
-      --cookie-dark: #c98e36;
-      --paper-color: #fffbeb;
-      --text-color: #5c3a12;
-      --shadow-color: rgba(0, 0, 0, 0.15);
+    :root{
+      --bg-color:#fdf2e9;
+      --cookie-color:#e4a74a;
+      --cookie-dark:#c98e36;
+      --paper-color:#fffbeb;
+      --text-color:#5c3a12;
+      --shadow-color:rgba(0,0,0,.15);
       --toggle-bg: rgba(92, 58, 18, 0.08);
+
+      --accent: #ffb300;
+      --bad-accent: #5c3a12;
+      --rare: #ff4fd8;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html, body {
-      height: 100%;
-      overflow: hidden;
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{height:100%;overflow:hidden;}
+    body{
+      display:flex;justify-content:center;align-items:center;
+      font-family:'Poppins','Helvetica Neue',sans-serif;
+      background: radial-gradient(circle,#fff7ed,var(--bg-color));
+      perspective:1000px;
+      -webkit-tap-highlight-color:transparent;
     }
 
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Poppins', 'Helvetica Neue', sans-serif;
-      background: radial-gradient(circle, #fff7ed, var(--bg-color));
-      perspective: 1000px;
-      -webkit-tap-highlight-color: transparent;
+    .game-container{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      width:100%;max-width:420px;padding:18px;gap:.75rem;
     }
 
-    .game-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      max-width: 400px;
-      padding: 20px;
-      gap: 0.75rem;
+    /* Top HUD */
+    .hud{
+      width:100%;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      background: rgba(255,255,255,.55);
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+      backdrop-filter: blur(8px);
     }
-
-    /* --- Mode Toggle --- */
-    .mode-toggle {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      margin-bottom: 0.5rem;
-      user-select: none;
+    .hud .stat{
+      display:flex;flex-direction:column;gap:2px;
+      font-size:.8rem;color:rgba(92,58,18,.75);
+      min-width:120px;
     }
-
-    .toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: var(--toggle-bg);
-      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-      backdrop-filter: blur(6px);
+    .hud .stat strong{
+      font-size:1rem;color:var(--text-color);
+      letter-spacing:.2px;
     }
-
-    .toggle-label {
-      font-size: 0.95rem;
-      font-weight: 600;
+    .hud .pill{
+      font-size:.78rem;
+      padding:6px 10px;border-radius:999px;
+      background: rgba(228,167,74,.18);
       color: var(--text-color);
-      opacity: 0.9;
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      font-weight:600;
+      display:flex;align-items:center;gap:8px;
+      cursor:pointer;
+      user-select:none;
     }
+    .hud .pill:active{transform:scale(.98);}
 
-    .toggle-label.inactive {
-      opacity: 0.45;
-      transform: scale(0.98);
+    /* Mode Toggle */
+    .mode-toggle{width:100%;display:flex;justify-content:center;margin-top:2px;}
+    .toggle{
+      display:inline-flex;align-items:center;gap:10px;
+      padding:10px 14px;border-radius:999px;background:var(--toggle-bg);
+      box-shadow:0 4px 14px rgba(0,0,0,.06);
+      backdrop-filter:blur(6px);
+      user-select:none;
     }
-
-    .switch {
-      position: relative;
-      width: 56px;
-      height: 30px;
-      border-radius: 999px;
-      background: rgba(201, 142, 54, 0.35);
-      cursor: pointer;
-      transition: background 0.25s ease;
-      box-shadow: inset 0 0 0 2px rgba(201, 142, 54, 0.25);
+    .toggle-label{
+      font-size:.95rem;font-weight:700;color:var(--text-color);
+      opacity:.9;transition:opacity .25s ease, transform .25s ease;
     }
-
-    .switch::after {
-      content: "";
-      position: absolute;
-      top: 4px;
-      left: 4px;
-      width: 22px;
-      height: 22px;
-      border-radius: 999px;
-      background: white;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.18);
-      transition: transform 0.25s ease;
+    .toggle-label.inactive{opacity:.45;transform:scale(.98);}
+    .switch{
+      position:relative;width:56px;height:30px;border-radius:999px;
+      background:rgba(201,142,54,.35);cursor:pointer;transition:background .25s ease;
+      box-shadow: inset 0 0 0 2px rgba(201,142,54,.25);
     }
-
-    /* When unfortunate mode ON */
-    .switch.on {
-      background: rgba(92, 58, 18, 0.45);
+    .switch::after{
+      content:"";position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:999px;
+      background:white;box-shadow:0 6px 16px rgba(0,0,0,.18);
+      transition:transform .25s ease;
     }
-    .switch.on::after {
-      transform: translateX(26px);
+    .switch.on{background:rgba(92,58,18,.45);}
+    .switch.on::after{transform:translateX(26px);}
+
+    /* Prompt */
+    #prompt{
+      font-size:1.15rem;font-weight:600;color:var(--text-color);
+      opacity:1;transition:opacity .5s ease;text-align:center;
+      margin: .25rem 0 1rem;
     }
+    #prompt.hidden{opacity:0;}
 
-    /* --- Prompt Text --- */
-    #prompt {
-      font-size: 1.2rem;
-      font-weight: 500;
-      color: var(--text-color);
-      opacity: 1;
-      transition: opacity 0.5s ease;
-      text-align: center;
-      margin-bottom: 1.25rem;
-    }
-
-    #prompt.hidden { opacity: 0; }
-
-    /* --- Fortune Cookie Styling & Animation --- */
-    .fortune-cookie-wrapper {
-      position: relative;
-      width: 250px;
-      height: 200px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
+    /* Cookie */
+    .fortune-cookie-wrapper{
+      position:relative;width:250px;height:200px;
+      display:flex;justify-content:center;align-items:center;
+      cursor:pointer;
       animation: float 4s ease-in-out infinite;
-      transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-      filter: drop-shadow(0 5px 8px rgba(0,0,0,0.2));
+      transition: transform .25s cubic-bezier(.25,.1,.25,1);
+      filter: drop-shadow(0 5px 8px rgba(0,0,0,.2));
+    }
+    .fortune-cookie-wrapper:hover{transform:scale(1.05);}
+    .fortune-cookie-wrapper:active{transform:scale(1.01);}
+
+    .cookie-half{
+      position:absolute;width:150px;height:150px;
+      transition: transform 1s cubic-bezier(.68,-.55,.27,1.55), opacity .8s ease-out .2s;
+    }
+    #cookie-left{transform-origin:bottom right;}
+    #cookie-right{transform-origin:bottom left;}
+
+    .fortune-cookie-wrapper.cracked #cookie-left{
+      transform: translate(-80px, 20px) rotate(-30deg) scale(.9);
+      opacity:0;
+    }
+    .fortune-cookie-wrapper.cracked #cookie-right{
+      transform: translate(80px, 20px) rotate(30deg) scale(.9);
+      opacity:0;
     }
 
-    .fortune-cookie-wrapper:hover { transform: scale(1.05); }
-
-    .cookie-half {
-      position: absolute;
-      width: 150px;
-      height: 150px;
-      transition: transform 1s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.8s ease-out 0.2s;
+    /* Shake animation when tapping */
+    .fortune-cookie-wrapper.shake{
+      animation: none;
+      transform: translateX(0);
+    }
+    .fortune-cookie-wrapper.shake{
+      animation: shake .35s ease-in-out 1;
+    }
+    @keyframes shake{
+      0%{transform:translateX(0) rotate(0deg);}
+      20%{transform:translateX(-6px) rotate(-2deg);}
+      40%{transform:translateX(6px) rotate(2deg);}
+      60%{transform:translateX(-4px) rotate(-1deg);}
+      80%{transform:translateX(4px) rotate(1deg);}
+      100%{transform:translateX(0) rotate(0deg);}
     }
 
-    #cookie-left { transform-origin: bottom right; }
-    #cookie-right { transform-origin: bottom left; }
-
-    .fortune-cookie-wrapper.cracked #cookie-left {
-      transform: translate(-80px, 20px) rotate(-30deg) scale(0.9);
-      opacity: 0;
+    /* Fortune paper */
+    #fortune-paper{
+      position:absolute;width:290px;
+      background:var(--paper-color);
+      padding:18px 18px 14px;
+      border-radius:10px;
+      box-shadow:0 10px 25px var(--shadow-color);
+      text-align:center;
+      opacity:0;
+      transform:translateY(20px) scale(.5);
+      transition: all .6s cubic-bezier(.175,.885,.32,1.275) .25s;
+      pointer-events:none;
+      z-index:-1;
+      border: 1px solid rgba(92,58,18,.08);
+    }
+    #fortune-paper.visible{
+      opacity:1;
+      transform:translateY(0) scale(1) rotate(-2deg);
+      pointer-events:auto;
+      z-index:10;
     }
 
-    .fortune-cookie-wrapper.cracked #cookie-right {
-      transform: translate(80px, 20px) rotate(30deg) scale(0.9);
-      opacity: 0;
+    /* Rare badge */
+    #rare-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:.78rem;
+      font-weight:800;
+      color: #fff;
+      background: linear-gradient(135deg, var(--rare), #ff9a3c);
+      padding:6px 10px;
+      border-radius:999px;
+      box-shadow:0 10px 18px rgba(255,79,216,.25);
+      margin-bottom:10px;
+      opacity:0;
+      transform: translateY(6px) scale(.98);
+      transition: all .35s ease;
+    }
+    #rare-badge.show{
+      opacity:1;
+      transform: translateY(0) scale(1);
     }
 
-    /* --- Fortune Paper Styling & Animation --- */
-    #fortune-paper {
-      position: absolute;
-      width: 280px;
-      background-color: var(--paper-color);
-      padding: 20px;
-      border-radius: 5px;
-      box-shadow: 0 10px 25px var(--shadow-color);
-      text-align: center;
-      opacity: 0;
-      transform: translateY(20px) scale(0.5);
-      transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s;
-      pointer-events: none;
-      z-index: -1;
+    #fortune-text{
+      font-family:'Caveat',cursive;
+      font-size:1.85rem;
+      line-height:1.35;
+      color:var(--text-color);
     }
 
-    #fortune-paper.visible {
-      opacity: 1;
-      transform: translateY(0) scale(1) rotate(-2deg);
-      pointer-events: auto;
-      z-index: 10;
+    /* Buttons row */
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top:1.2rem;
+      width:100%;
+      justify-content:center;
     }
 
-    #fortune-text {
-      font-family: 'Caveat', cursive;
-      font-size: 1.8rem;
-      line-height: 1.4;
-      color: var(--text-color);
+    .btn{
+      padding:12px 18px;
+      font-size:1rem;
+      font-weight:700;
+      border:none;
+      border-radius:999px;
+      cursor:pointer;
+      box-shadow:0 4px 15px var(--shadow-color);
+      transition: transform .2s ease, opacity .5s ease 1s, background .2s ease, box-shadow .2s ease;
+      opacity:0;
+      transform: translateY(16px);
+      pointer-events:none;
     }
-
-    /* Slight vibe shift when unfortunate mode is ON (optional, subtle) */
-    body.unfortunate #fortune-paper.visible {
-      transform: translateY(0) scale(1) rotate(2deg);
-    }
-
-    /* --- Reset Button --- */
-    #reset-button {
-      margin-top: 1.25rem;
-      padding: 12px 28px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: white;
-      background-color: var(--cookie-dark);
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      box-shadow: 0 4px 15px var(--shadow-color);
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.5s ease 1s;
-      pointer-events: none;
-    }
-
-    #reset-button.visible {
-      opacity: 1;
+    .btn.visible{
+      opacity:1;
       transform: translateY(0);
-      pointer-events: auto;
+      pointer-events:auto;
     }
 
-    #reset-button:hover {
-      background-color: var(--cookie-color);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px var(--shadow-color);
+    #reset-button{color:white;background:var(--cookie-dark);}
+    #reset-button:hover{background:var(--cookie-color);transform:translateY(-2px);box-shadow:0 6px 20px var(--shadow-color);}
+
+    #share-button{
+      color: var(--text-color);
+      background: rgba(255,255,255,.85);
+      border: 1px solid rgba(92,58,18,.15);
+    }
+    #share-button:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.12);}
+
+    /* Confetti/Ash Canvas */
+    #fx{
+      position:fixed;inset:0;
+      pointer-events:none;
+      z-index:50;
     }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-15px); }
+    @keyframes float {0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);}}
+
+    footer{
+      position:absolute;bottom:10px;width:100%;text-align:center;
+      font-size:.8rem;color:#bda17e;
     }
 
-    footer {
-      position: absolute;
-      bottom: 10px;
-      width: 100%;
-      text-align: center;
-      font-size: 0.8rem;
-      color: #bda17e;
-    }
+    /* Subtle vibe shift */
+    body.unfortunate .hud{background: rgba(255,255,255,.48);}
+    body.unfortunate #fortune-paper{box-shadow:0 10px 25px rgba(0,0,0,.18);}
   </style>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Caveat:wght@700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Caveat:wght@700&display=swap" rel="stylesheet" />
 </head>
 
 <body>
+  <canvas id="fx"></canvas>
+
   <div class="game-container">
 
-    <!-- NEW: Mode Toggle -->
+    <!-- NEW: HUD -->
+    <div class="hud">
+      <div class="stat">
+        <span>Mode</span>
+        <strong id="mode-readout">Lucky 😄</strong>
+      </div>
+      <div class="stat" style="text-align:center;">
+        <span>Streak</span>
+        <strong id="streak-readout">0</strong>
+      </div>
+      <div class="pill" id="sound-pill" role="button" aria-label="Toggle Sound" tabindex="0">
+        <span id="sound-icon">🔊</span>
+        <span id="sound-text">Sound On</span>
+      </div>
+    </div>
+
+    <!-- Mode Toggle -->
     <div class="mode-toggle">
       <div class="toggle" id="mode-toggle" aria-label="Toggle Unfortunate Mode" role="button" tabindex="0">
-        <span class="toggle-label" id="label-lucky"> Fortunate Mode 😄</span>
+        <span class="toggle-label" id="label-lucky">Lucky 😄</span>
         <div class="switch" id="switch"></div>
-        <span class="toggle-label inactive" id="label-unlucky">Unfortunate Mode 😈</span>
+        <span class="toggle-label inactive" id="label-unlucky">Unfortunate 😈</span>
       </div>
     </div>
 
     <p id="prompt">Tap the cookie to reveal your fortune!</p>
 
-    <div class="fortune-cookie-wrapper" id="fortune-cookie">
+    <div class="fortune-cookie-wrapper" id="fortune-cookie" aria-label="Fortune Cookie" role="button" tabindex="0">
       <div id="fortune-paper">
+        <div id="rare-badge">✨ RARE DROP ✨</div>
         <p id="fortune-text"></p>
       </div>
 
@@ -293,185 +331,389 @@
       </svg>
     </div>
 
-    <button id="reset-button">New Fortune</button>
+    <div class="actions">
+      <button class="btn" id="reset-button">New Fortune</button>
+      <button class="btn" id="share-button">Share</button>
+    </div>
   </div>
 
   <footer>&copy; 2025 raunak mane</footer>
 
   <script>
+    // =============================
+    //  FORTUNES
+    // =============================
     const fortunes = [
       "You’re not behind — you just took the scenic route.",
       "Your future self is already proud of you (and kinda hot).",
       "You didn’t overthink it — you pre-analyzed the situation.",
       "Some people chase peace. You mute notifications.",
       "You’re the calm and the storm — multitasking legend.",
-      "Romanticize your 2 AM overthinking, it builds character.",
       "Your ‘whatever happens, happens’ era is thriving.",
       "If it’s meant for you, it won’t leave you on read.",
-      "The group chat will discuss your next move — make it spicy.",
-      "You survived worse Wi-Fi than this. You’ll be fine.",
-      "You’re not tired, you’re just buffering.",
-      "Main character, but still replies with ‘lol’ to everything.",
       "You’re one iced coffee away from greatness.",
-      "Your soft era includes blocking nonsense. Growth.",
-      "You didn’t lose — the universe just said ‘plot twist.’",
-      "Being delulu is self-care, actually.",
-      "You don’t need a plan, you need a playlist.",
-      "Your next chapter starts after one more nap.",
-      "They’re not ignoring you — they’re intimidated. Probably.",
-      "You are the green flag you’ve been searching for.",
-      "You didn’t get rejected — they just fumbled lore.",
-      "You’re not lazy — you’re energy efficient.",
-      "Good things are loading… slowly, like your laptop.",
-      "You don’t owe anyone updates, just vibes.",
-      "You’ll figure it out. You always do.",
-      "You’re the person your old self wished they could text.",
-      "Even your resting face gives ‘main character’ energy.",
-      "Don’t chase. Scroll. Hydrate. Slay.",
-      "It’s not overthinking — it’s a mental side quest.",
-      "You don’t need closure, you need sushi.",
-      "You’re the drama, but in 4K quality.",
       "Your peace > their opinion.",
-      "The universe said ‘ok influencer’ after your last decision.",
       "Your glow-up will have people checking timestamps.",
-      "You’re not stuck — you’re buffering for character development.",
-      "You bring main-character energy to group projects.",
-      "Your soft-launch era is about to go viral.",
-      "You’re healing, but make it aesthetic.",
-      "Delulu today, iconic tomorrow.",
-      "Your comfort zone called — you sent it to voicemail.",
-      "You didn’t miss your chance, it’s just fashionably late.",
-      "You’re proof that chaos and charm can coexist.",
-      "You’re doing better than you refresh-check.",
-      "Even your flop era had aesthetic lighting.",
-      "The world isn’t ending, it’s just refreshing.",
-      "You’re the kind of person strangers remember.",
       "Keep going — your ‘aha moment’ is typing…",
-      "You are both the problem and the solution. Balance.",
-      "You don’t need luck — you need Wi-Fi and confidence.",
-      "One day you’ll laugh about this — probably on a podcast."
+      "You don’t need luck — you need Wi-Fi and confidence."
     ];
 
-    // NEW: Unfortunate fortunes (playful, not hateful)
     const unfortunes = [
       "You will step in something wet while wearing fresh socks.",
-      "Your phone will fall exactly one inch… and still crack.",
-      "You’ll open the fridge, forget why, and repeat this 6 times.",
       "Your charger will only work at a specific angle. That angle will change daily.",
-      "You will send the perfect text… to the wrong person.",
-      "Your next ‘quick 5 minutes’ task will take 47 minutes.",
-      "You will sneeze right after applying lip balm. Twice.",
-      "Your playlist will shuffle to the one sad song in a happy moment.",
-      "Someone will say “we should hang out” and mean “never.”",
-      "You will miss the elevator, then watch it stop at every floor.",
-      "Your iced coffee will be 90% ice, 10% regret.",
-      "You will clean your room and immediately lose everything.",
-      "Your Wi-Fi will be strong… emotionally, not technically.",
-      "You will walk into a room and your brain will factory reset.",
-      "You’ll hit ‘reply all’ when you meant ‘reply.’",
-      "Your package will be ‘out for delivery’ for 3 business days.",
-      "You will wear white and meet ketchup within the hour.",
-      "Your alarm will go off, and you’ll negotiate with it… and lose.",
-      "You will make eye contact at the worst possible moment.",
-      "Your best idea will arrive while you’re shampooing.",
       "You will say “you too” after someone says “enjoy your meal.”",
-      "The universe has scheduled a minor inconvenience… right now.",
-      "Your hoodie strings will disappear forever. No explanation.",
-      "You will forget a name immediately after hearing it.",
-      "Your shoe will squeak in a silent room. Repeatedly.",
-      "You will join a meeting muted… then unmute at the wrong time.",
+      "Your package will be ‘out for delivery’ for 3 business days.",
       "Your screen protector will trap exactly one dust speck in the center.",
-      "You will trip slightly, recover, then trip again for emphasis.",
-      "Your pen will run out mid-signature.",
-      "You will remember the embarrassing thing at 2:37 AM, sharp and clear.",
-      "The next seat you choose will be wobbly.",
-      "Your AirPods will connect to the device you least expected.",
-      "You will type a masterpiece and then accidentally refresh.",
-      "You will finally relax and immediately get a ‘quick call?’ text.",
-      "You will spill water, and it will choose violence toward electronics."
+      "Your iced coffee will be 90% ice, 10% regret.",
+      "You will make eye contact at the worst possible moment.",
+      "Your hoodie strings will disappear forever. No explanation.",
+      "Your best idea will arrive while you’re shampooing.",
+      "You will trip slightly, recover, then trip again for emphasis."
     ];
 
-    // DOM Elements
-    const fortuneCookie = document.getElementById('fortune-cookie');
-    const fortunePaper = document.getElementById('fortune-paper');
-    const fortuneText = document.getElementById('fortune-text');
-    const resetButton = document.getElementById('reset-button');
-    const promptText = document.getElementById('prompt');
+    // Rare drops (small chance)
+    const rareFortunes = [
+      "✨ RARE: Today you accidentally become the standard.",
+      "✨ RARE: You pull up with so much aura the timeline pauses.",
+      "✨ RARE: A ‘yes’ lands in your lap. Don’t fumble it.",
+      "✨ RARE: Your next decision upgrades your whole storyline."
+    ];
+    const rareUnfortunes = [
+      "✨ RARE: You will text “on my way” while still in bed.",
+      "✨ RARE: You will confidently walk the wrong direction… twice.",
+      "✨ RARE: You will open the camera by accident in a dark room. Jumpscare.",
+      "✨ RARE: Your phone will die at 3% because it wanted to."
+    ];
 
-    // NEW: Toggle elements
-    const modeToggle = document.getElementById('mode-toggle');
-    const switchEl = document.getElementById('switch');
-    const labelLucky = document.getElementById('label-lucky');
-    const labelUnlucky = document.getElementById('label-unlucky');
+    // =============================
+    //  DOM
+    // =============================
+    const fortuneCookie = document.getElementById('fortune-cookie');
+    const fortunePaper  = document.getElementById('fortune-paper');
+    const fortuneText   = document.getElementById('fortune-text');
+    const rareBadge     = document.getElementById('rare-badge');
+    const resetButton   = document.getElementById('reset-button');
+    const shareButton   = document.getElementById('share-button');
+    const promptText    = document.getElementById('prompt');
+
+    const modeToggle    = document.getElementById('mode-toggle');
+    const switchEl      = document.getElementById('switch');
+    const labelLucky    = document.getElementById('label-lucky');
+    const labelUnlucky  = document.getElementById('label-unlucky');
+
+    const modeReadout   = document.getElementById('mode-readout');
+    const streakReadout = document.getElementById('streak-readout');
+
+    const soundPill     = document.getElementById('sound-pill');
+    const soundIcon     = document.getElementById('sound-icon');
+    const soundText     = document.getElementById('sound-text');
+
+    // Canvas for FX
+    const fx = document.getElementById('fx');
+    const ctx = fx.getContext('2d');
 
     let isCracked = false;
     let unfortunateMode = false;
 
-    function setMode(isUnfortunate) {
+    let streakLucky = 0;
+    let streakUnlucky = 0;
+
+    let soundOn = true;
+
+    // =============================
+    //  Tiny Synth Sounds (no files)
+    // =============================
+    let audioCtx = null;
+    function beep(type = "crack"){
+      if (!soundOn) return;
+      try{
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+
+        if (type === "crack"){
+          o.type = "square";
+          o.frequency.setValueAtTime(280, audioCtx.currentTime);
+          o.frequency.exponentialRampToValueAtTime(90, audioCtx.currentTime + 0.09);
+          g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.11);
+          o.start(); o.stop(audioCtx.currentTime + 0.12);
+        } else {
+          o.type = "triangle";
+          o.frequency.setValueAtTime(520, audioCtx.currentTime);
+          o.frequency.exponentialRampToValueAtTime(780, audioCtx.currentTime + 0.08);
+          g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.14, audioCtx.currentTime + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.14);
+          o.start(); o.stop(audioCtx.currentTime + 0.15);
+        }
+      }catch(e){}
+    }
+
+    function haptic(ms=25){
+      if (navigator.vibrate) navigator.vibrate(ms);
+    }
+
+    // =============================
+    //  FX (Confetti / Ash)
+    // =============================
+    function resizeFx(){
+      fx.width = window.innerWidth;
+      fx.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeFx);
+    resizeFx();
+
+    let particles = [];
+    let animId = null;
+
+    function burstFX(kind="confetti"){
+      // kind: "confetti" or "ash"
+      const count = kind === "confetti" ? 140 : 120;
+      const w = fx.width, h = fx.height;
+
+      for (let i=0;i<count;i++){
+        particles.push({
+          x: Math.random()*w,
+          y: -10 - Math.random()*h*0.15,
+          vx: (Math.random()-0.5) * (kind==="confetti"? 1.8 : 0.6),
+          vy: (kind==="confetti"? 2.8 : 1.2) + Math.random()*2,
+          r: (kind==="confetti"? 3 : 2) + Math.random()*3,
+          rot: Math.random()*Math.PI*2,
+          vr: (Math.random()-0.5)*0.2,
+          life: 0,
+          maxLife: 240 + Math.floor(Math.random()*120),
+          kind
+        });
+      }
+      if (!animId) animateFX();
+    }
+
+    function animateFX(){
+      const w = fx.width, h = fx.height;
+      ctx.clearRect(0,0,w,h);
+
+      particles = particles.filter(p => p.life < p.maxLife && p.y < h + 30);
+
+      for (const p of particles){
+        p.life++;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vr;
+
+        // Draw
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+
+        if (p.kind === "confetti"){
+          // Random warm confetti
+          ctx.globalAlpha = Math.max(0, 1 - p.life/p.maxLife);
+          ctx.fillStyle = `hsl(${30 + Math.random()*60}, 85%, 60%)`;
+          ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
+        } else {
+          // Ash (soft gray/brown)
+          ctx.globalAlpha = 0.8 * Math.max(0, 1 - p.life/p.maxLife);
+          ctx.fillStyle = `rgba(92,58,18,${0.35 + Math.random()*0.25})`;
+          ctx.beginPath();
+          ctx.arc(0,0,p.r,0,Math.PI*2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      if (particles.length){
+        animId = requestAnimationFrame(animateFX);
+      } else {
+        cancelAnimationFrame(animId);
+        animId = null;
+        ctx.clearRect(0,0,w,h);
+      }
+    }
+
+    // =============================
+    //  MODE + STREAK
+    // =============================
+    function setMode(isUnfortunate){
       unfortunateMode = isUnfortunate;
       switchEl.classList.toggle('on', unfortunateMode);
       labelLucky.classList.toggle('inactive', unfortunateMode);
       labelUnlucky.classList.toggle('inactive', !unfortunateMode);
       document.body.classList.toggle('unfortunate', unfortunateMode);
+
+      modeReadout.textContent = unfortunateMode ? "Unfortunate 😈" : "Lucky 😄";
       promptText.textContent = unfortunateMode
         ? "Tap the cookie… if you dare 😈"
         : "Tap the cookie to reveal your fortune!";
+
+      updateStreakReadout();
     }
 
-    function toggleMode() {
-      // Optional: prevent mode switching after cracking (keeps UX simple)
+    function updateStreakReadout(){
+      streakReadout.textContent = unfortunateMode ? streakUnlucky : streakLucky;
+    }
+
+    function toggleMode(){
       if (isCracked) return;
       setMode(!unfortunateMode);
     }
 
-    function crackCookie() {
+    // =============================
+    //  GAME LOGIC
+    // =============================
+    function pickMessage(){
+      // rare chance
+      const isRare = Math.random() < 0.02; // 2%
+      let msg = "";
+      if (unfortunateMode){
+        msg = isRare
+          ? rareUnfortunes[Math.floor(Math.random()*rareUnfortunes.length)]
+          : unfortunes[Math.floor(Math.random()*unfortunes.length)];
+      } else {
+        msg = isRare
+          ? rareFortunes[Math.floor(Math.random()*rareFortunes.length)]
+          : fortunes[Math.floor(Math.random()*fortunes.length)];
+      }
+      return { msg, isRare };
+    }
+
+    function crackCookie(){
       if (isCracked) return;
       isCracked = true;
 
-      // Hide the prompt
-      promptText.classList.add('hidden');
+      // little shake
+      fortuneCookie.classList.remove('shake');
+      void fortuneCookie.offsetWidth; // restart animation
+      fortuneCookie.classList.add('shake');
 
-      // Start crack animation
+      promptText.classList.add('hidden');
       fortuneCookie.classList.add('cracked');
 
-      // Choose list based on mode
-      const activeList = unfortunateMode ? unfortunes : fortunes;
-      const randomIndex = Math.floor(Math.random() * activeList.length);
-      fortuneText.textContent = activeList[randomIndex];
+      const { msg, isRare } = pickMessage();
+      fortuneText.textContent = msg;
 
-      // Show the paper and reset button
+      rareBadge.classList.toggle('show', isRare);
+
       fortunePaper.classList.add('visible');
       resetButton.classList.add('visible');
+      shareButton.classList.add('visible');
+
+      // sounds + haptic
+      beep("crack");
+      setTimeout(() => beep("paper"), 180);
+      haptic(25);
+
+      // FX
+      if (unfortunateMode){
+        burstFX("ash");
+        streakUnlucky++;
+        streakLucky = 0;
+      } else {
+        burstFX("confetti");
+        streakLucky++;
+        streakUnlucky = 0;
+      }
+      updateStreakReadout();
     }
 
-    function resetGame() {
+    function resetGame(){
       isCracked = false;
 
       fortunePaper.classList.remove('visible');
       resetButton.classList.remove('visible');
+      shareButton.classList.remove('visible');
+      rareBadge.classList.remove('show');
 
       setTimeout(() => {
         fortuneCookie.classList.remove('cracked');
         promptText.classList.remove('hidden');
-      }, 500);
+      }, 450);
     }
 
-    // Event Listeners
-    fortuneCookie.addEventListener('click', crackCookie);
-    resetButton.addEventListener('click', resetGame);
+    async function shareFortune(){
+      const text = fortuneText.textContent?.trim();
+      if (!text) return;
 
-    // Toggle click + keyboard
+      const prefix = unfortunateMode ? "😈 Unfortunate Cookie says:" : "😄 Fortune Cookie says:";
+      const payload = `${prefix}\n"${text}"\n— Fortune Cookie Game`;
+
+      try{
+        await navigator.clipboard.writeText(payload);
+        // quick UI feedback
+        const old = shareButton.textContent;
+        shareButton.textContent = "Copied ✅";
+        haptic(15);
+        setTimeout(()=> shareButton.textContent = old, 900);
+      }catch(e){
+        alert("Couldn’t copy. Try manually selecting the text.");
+      }
+    }
+
+    // =============================
+    //  SOUND TOGGLE
+    // =============================
+    function setSound(on){
+      soundOn = on;
+      soundIcon.textContent = soundOn ? "🔊" : "🔇";
+      soundText.textContent = soundOn ? "Sound On" : "Sound Off";
+      if (soundOn) beep("paper");
+    }
+
+    function toggleSound(){
+      setSound(!soundOn);
+    }
+
+    // =============================
+    //  SHAKE TO CRACK (mobile)
+    // =============================
+    let lastShakeTime = 0;
+    let shakeStrength = 0;
+
+    window.addEventListener('devicemotion', (e) => {
+      if (isCracked) return;
+      const acc = e.accelerationIncludingGravity;
+      if (!acc) return;
+
+      const now = Date.now();
+      const x = acc.x || 0, y = acc.y || 0, z = acc.z || 0;
+      const magnitude = Math.sqrt(x*x + y*y + z*z);
+
+      // Smooth-ish strength
+      shakeStrength = 0.8*shakeStrength + 0.2*magnitude;
+
+      // Threshold tuned to avoid false triggers
+      if (shakeStrength > 19 && now - lastShakeTime > 1200){
+        lastShakeTime = now;
+        crackCookie();
+      }
+    });
+
+    // =============================
+    //  EVENTS
+    // =============================
+    fortuneCookie.addEventListener('click', crackCookie);
+    fortuneCookie.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); crackCookie(); }
+    });
+
+    resetButton.addEventListener('click', resetGame);
+    shareButton.addEventListener('click', shareFortune);
+
     modeToggle.addEventListener('click', toggleMode);
     modeToggle.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggleMode();
-      }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMode(); }
+    });
+
+    soundPill.addEventListener('click', toggleSound);
+    soundPill.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSound(); }
     });
 
     // Init
     setMode(false);
+    setSound(true);
   </script>
 </body>
 </html>
-
